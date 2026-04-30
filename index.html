@@ -1,0 +1,11 @@
+<h1>Song Reviews</h1>
+
+{% for r in ratings %}
+<div class = "card">
+    <h3>{{r.song.songName}}</h3>
+    <p>By {{r.user.userName}}</p>
+    <p>Rating: {{r.rating}}</p>
+    <p>Comments: {{r.comments}}</p>
+</div>
+
+{% endfor %}

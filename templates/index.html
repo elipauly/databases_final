@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Music Rating App</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono&family=Hanken+Grotesk:ital,wght@0,100..900;1,100..900&family=Open+Sans&family=PT+Serif:ital,wght@0,400;0,700;1,400;1,700&family=Space+Grotesk:wght@300..700&family=Special+Elite&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: "Hanken Grotesk", sans-serif;
+            font-optical-sizing: auto;
+            font-weight: 400;
+            font-style: normal;
+        }
+
+        header {
+            font-family: "Special Elite", system-ui;
+            font-weight: 400;
+            font-style: normal;
+            background: #0000;
+        }
+
+        .container {
+            max-width: 80vw;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+        .card {
+            background: #0000;
+            border-radius: 12px;
+            padding: 18px;
+            margin-bottom: 20px;
+            transition: transform 0.1s ease;
+        }
+        .card:hover {
+            transform: scale(1.01);
+        }
+        .song-title{
+            font-family: "Special Elite", system-ui;
+            font-weight: 400;
+            font-style: normal;
+        }
+
+        .meta {
+            color: #343131;
+            margin: 5px;
+        }
+        .rating {
+            margin-top: 10px;
+        }
+        .stars {
+            color: #f1bc5a
+        }
+
+        .comment {
+            margin-top: 10px;
+            font-weight: 600;
+        }
+        .empty {
+            text-align: center;
+            margin-top: 50px;
+            color: #0000;
+        }
+    </style>
+</head>
+
+<header>
+    🎵 Music Ratings
+</header>
+
+<div class="container">
+
+    {% if ratings|length == 0 %}
+        <div class="empty">No ratings yet.</div>
+    {% endif %}
+
+    {% for r in ratings %}
+        <div class="card">
+
+            <div class="song-title">
+                {{ r.song.songName }}
+            </div>
+
+            <div class="meta">
+                Reviewed by {{ r.user.username }}
+            </div>
+
+            {% if r.song.album %}
+            <div class="meta">
+                Album: {{ r.song.album.albumName }}
+            </div>
+            {% endif %}
+
+            <div class="rating">
+                Rating:
+                <span class="stars">
+                    {% for i in range(r.rating) %}
+                        ★
+                    {% endfor %}
+                </span>
+                ({{ r.rating }}/5)
+            </div>
+
+            {% if r.comments %}
+                <div class="comment">
+                    "{{ r.comments }}"
+                </div>
+            {% endif %}
+
+        </div>
+    {% endfor %}
+
+</div>
+
+</body>
+</html>

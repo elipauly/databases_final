@@ -21,19 +21,24 @@ def get_db():
 
 @app.get("/")
 def home(request: Request, db: Session = Depends(get_db)):
-    users = db.query(User).all()
-    return templates.TemplateResponse("index.html", {
-        "request": request,
-        "users": users
-    })
+    ratings = db.query(Ratings).all()
+
+    return templates.TemplateResponse(
+        request,               # FIRST
+        "index.html",          # SECOND
+        {
+            "request": request,
+            "ratings": ratings
+        }
+    )
 
 @app.post("/users/")
-def create_user(name: str, email: str, db: Session = Depends(get_db)):
-    User = User(name=name, email=email)
-    db.add(User)
+def create_user(username: str, email: str, db: Session = Depends(get_db)):
+    new_user = User(username=username, email=email)
+    db.add(new_user)
     db.commit()
-    db.refresh(User)
-    return User
+    db.refresh(new_user)
+    return new_user
 
 @app.get("/users/")
 def get_users(db: Session = Depends(get_db)):

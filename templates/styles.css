@@ -1,0 +1,64 @@
+body {
+    font-family: Helvetica, sans-serif;
+    background-color: #121212;
+    color: #ffffff;
+    margin: 0;
+}
+
+header {
+    padding: 20px;
+    background: #1db954;
+    text-align: center;
+    font-size: 1.8rem;
+    font-weight: bold;
+}
+
+.container {
+    max-width: 1000px;
+    margin: 30px auto;
+    padding: 0 20px;
+}
+
+.card {
+    background: #1e1e1e;
+    border-radius: 12px;
+    padding: 18px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+    transition: transform 0.15s ease;
+}
+
+.card:hover {
+    transform: scale(1.02);
+}
+
+.song-title {
+    font-size: 1.3rem;
+    font-weight: bold;
+}
+
+.meta {
+    color: #b3b3b3;
+    margin: 5px 0;
+}
+
+.rating {
+    margin-top: 10px;
+    font-size: 1.1rem;
+}
+
+.stars {
+    color: gold;
+}
+
+.comment {
+    margin-top: 10px;
+    font-style: italic;
+    color: #e0e0e0;
+}
+
+.empty {
+    text-align: center;
+    margin-top: 50px;
+    color: #aaa;
+}

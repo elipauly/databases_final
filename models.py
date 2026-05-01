@@ -35,3 +35,4 @@ class Album(Base):
 
     albumID = Column(Integer, primary_key=True)
     albumName = Column(String(100))
+

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono&family=Hanken+Grotesk:ital,wght@0,100..900;1,100..900&family=Open+Sans&family=PT+Serif:ital,wght@0,400;0,700;1,400;1,700&family=Space+Grotesk:wght@300..700&family=Special+Elite&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            background: #121212;
+            color: white;
+            font-family: "Hanken Grotesk", sans-serif;
+            font-weight: 400;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .box {
+            background: #1e1e1e;
+            padding: 30px;
+            border-radius: 10px;
+            width: 300px;
+        }
+
+        input {
+            width: 100%;
+            margin-bottom: 10px;
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            background: #2a2a2a;
+            color: white;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background: #b2f15a;
+            border: none;
+            border-radius: 6px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<div class="box">
+    <h2>Login</h2>
+
+    <form method="post" action="/login">
+        <input name="username" placeholder="Username" required>
+        <input name="password" placeholder="Password" required>
+        <button type="submit">Log In</button>
+    </form>
+</div>
+
+</body>
+</html>

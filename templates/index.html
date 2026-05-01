@@ -13,13 +13,19 @@
             font-optical-sizing: auto;
             font-weight: 400;
             font-style: normal;
+            margin: 0;
+            color:azure;
+            background-color: rgb(33, 33, 32);
         }
 
         header {
             font-family: "Special Elite", system-ui;
             font-weight: 400;
             font-style: normal;
-            background: #0000;
+            text-align: center;
+            font-size: 1.8rem;
+            padding: 20px;
+
         }
 
         .container {
@@ -28,10 +34,11 @@
             padding: 0 20px;
         }
         .card {
-            background: #0000;
+            background: rgb(59, 60, 58);
             border-radius: 12px;
             padding: 18px;
             margin-bottom: 20px;
+            box-shadow: 0 4px 10px #0000;
             transition: transform 0.1s ease;
         }
         .card:hover {
@@ -41,17 +48,19 @@
             font-family: "Special Elite", system-ui;
             font-weight: 400;
             font-style: normal;
+            font-size: 1.3rem;
+            color:azure;
         }
 
         .meta {
-            color: #343131;
             margin: 5px;
+            color:azure;
         }
         .rating {
             margin-top: 10px;
         }
         .stars {
-            color: #f1bc5a
+            color: #b2f15a
         }
 
         .comment {
@@ -61,57 +70,131 @@
         .empty {
             text-align: center;
             margin-top: 50px;
-            color: #0000;
+            color:azure;
+        }
+        .grid {
+            display:grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+        }
+        .reviews {
+            margin-top: 10px;
+            border-top: 1px solid #333;
+            padding-top: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .review {
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #2a2a2a;
+        }
+        .review-user {
+            font-weight: bold;
+        }
+
+        .comment {
+            font-style: italic;
+            color: #ddd;
+        }
+
+        /* FORM */
+        .review-form {
+            margin-top: auto;
+            border-top: 1px solid #333;
+            padding-top: 10px;
+        }
+
+        .review-form input,
+        .review-form textarea {
+            width: 100%;
+            margin-bottom: 8px;
+            padding: 8px;
+            border-radius: 6px;
+            border: none;
+            background: #2a2a2a;
+            color: white;
+        }
+
+        .review-form button {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            background: #b2f15a;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .review-form button:hover {
+            background: #b2f15a;
         }
     </style>
 </head>
 
 <header>
-    🎵 Music Ratings
+    Release Radar
+    <a href="/logout">Log out</a>
 </header>
 
 <div class="container">
+    <div class="grid">
 
-    {% if ratings|length == 0 %}
-        <div class="empty">No ratings yet.</div>
-    {% endif %}
-
-    {% for r in ratings %}
+        {% for song in songs %}
         <div class="card">
 
-            <div class="song-title">
-                {{ r.song.songName }}
-            </div>
+            <!-- SONG INFO -->
+            <div class="song-title">{{ song.songName }}</div>
 
-            <div class="meta">
-                Reviewed by {{ r.user.username }}
-            </div>
-
-            {% if r.song.album %}
-            <div class="meta">
-                Album: {{ r.song.album.albumName }}
-            </div>
+            {% if song.album %}
+            <div class="meta">Album: {{ song.album.albumName }}</div>
             {% endif %}
 
-            <div class="rating">
-                Rating:
-                <span class="stars">
-                    {% for i in range(r.rating) %}
-                        ★
-                    {% endfor %}
-                </span>
-                ({{ r.rating }}/5)
-            </div>
+            <!-- REVIEWS -->
+            <div class="reviews">
+                {% if song.ratings|length == 0 %}
+                    <div class="meta">No reviews yet</div>
+                {% endif %}
 
-            {% if r.comments %}
-                <div class="comment">
-                    "{{ r.comments }}"
+                {% for r in song.ratings %}
+                <div class="review">
+                    <div class="review-user">{{ r.user.username }}</div>
+
+                    <div class="stars">
+                        {% for i in range(r.rating) %}★{% endfor %}
+                        ({{ r.rating }})
+                    </div>
+
+                    {% if r.comments %}
+                    <div class="comment">"{{ r.comments }}"</div>
+                    {% endif %}
                 </div>
-            {% endif %}
+                {% endfor %}
+            </div>
+
+            <!-- ADD REVIEW -->
+            <form class="review-form" method="post" action="/ratings">
+                <input type="hidden" name="song_id" value="{{ song.songID }}">
+                
+                <!--user logged in check-->
+                {% if user %}
+                    <input type="hidden" name="user_id" value="{{ user.userID }}">
+                {% else %}
+                    <div class="meta">Login to review</div>
+                {% endif %}
+                
+                <input type="number" name="rating" min="1" max="5" placeholder="Rating (1-5)" required>
+
+                <textarea name="comments" placeholder="Write a comment..."></textarea>
+
+                <button type="submit">Add Review</button>
+            </form>
 
         </div>
-    {% endfor %}
+        {% endfor %}
 
+    </div>
 </div>
 
 </body>

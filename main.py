@@ -1,13 +1,10 @@
-from fastapi.responses import RedirectResponse
-
-from database import engine
+from database import engine, SessionLocal
 from models import Base, User, Song, Ratings
 from fastapi import FastAPI, Depends, Request, Form
-from fastapi import RedirectResponse
 from fastapi.templating import Jinja2Templates
-from sqlalchemy.orm import Session, joinedload
-from database import SessionLocal
-from models import User
+from fastapi.responses import RedirectResponse
+from sqlalchemy import text
+from sqlalchemy.orm import Session
 
 Base.metadata.create_all(bind=engine)
 
@@ -26,17 +23,52 @@ def get_current_user(request: Request, db: Session):
     user_id = request.cookies.get("user_id")
     if not user_id:
         return None
-    return db.query(User).filter(User.userID == int(user_id)).first()
+    result = db.execute(text("""
+        SELECT * FROM User WHERE userID = :id """)
+        , {"id": int(user_id)}).fetchone()
+
+    return result
+        
 
 @app.get("/")
 def home(request: Request, db: Session = Depends(get_db)):
 
     user = get_current_user(request, db)
 
-    songs = db.query(Song).options(
-        joinedload(Song.ratings).joinedload(Ratings.user),
-        joinedload(Song.album)
-    ).all()
+    result = db.execute(text("""
+        SELECT 
+            s.songID,
+            s.songName,
+            a.albumName,
+            r.rating,
+            r.comments,
+            u.username
+        FROM Song s
+        LEFT JOIN Album a ON s.albumID = a.albumID
+        LEFT JOIN Ratings r ON s.songID = r.songID
+        LEFT JOIN User u ON r.userID = u.userID
+        ORDER BY s.songID
+    """)).fetchall()
+
+    #formatting to frontend
+    songs_dict = {}
+    for row in result:
+        song_id = row.songID
+
+        if song_id not in songs_dict:
+            songs_dict[song_id] = {
+                "songID": song_id,
+                "songName": row.songName,
+                "albumName": row.albumName,
+                "ratings": []
+            }
+        if row.rating is not None:
+            songs_dict[song_id]["ratings"].append({
+                "username": row.username,
+                "rating": row.rating,
+                "comments": row.comments
+            })
+    songs = list(songs_dict.values())
 
     return templates.TemplateResponse(
         request,
@@ -55,15 +87,16 @@ def create_user(
     password: str = Form(...),
     db: Session = Depends(get_db)
 ):
-    new_user = User(
-        username=username,
-        email=email,
-        password=password
-    )
+    db.execute(text("""
+        INSERT INTO User (username, email, password)
+        VALUES (:username, :email, :password)
+    """), {
+        "username": username,
+        "email": email,
+        "password": password
+    })
 
-    db.add(new_user)
     db.commit()
-    db.refresh(new_user)
 
     return RedirectResponse("/login", status_code=303)
 
@@ -83,14 +116,19 @@ def add_rating(
     if not user_id:
         return RedirectResponse("/login", status_code=303)
 
-    new_rating = Ratings(
-        userID=int(user_id),
-        songID=song_id,
-        rating=rating,
-        comments=comments
-    )
+    db.execute(text("""
+        INSERT INTO Ratings (userID, songID, rating, comments)
+        VALUES (:user_id, :song_id, :rating, :comments)
+        ON DUPLICATE KEY UPDATE
+            rating = :rating,
+            comments = :comments
+    """), {
+        "user_id": int(user_id),
+        "song_id": song_id,
+        "rating": rating,
+        "comments": comments
+    })
 
-    db.add(new_rating)
     db.commit()
 
     return RedirectResponse("/", status_code=303)
@@ -106,10 +144,13 @@ def login_page(request: Request):
 def login(
     username: str = Form(...), password:str = Form(...), db: Session = Depends(get_db)
 ):
-    user = db.query(User).filter(
-        User.username == username,
-        User.password == password
-    ).first()
+    user = db.execute(text("""
+        SELECT * FROM User
+        WHERE username = :username AND password = :password
+    """), {
+        "username": username,
+        "password": password
+    }).fetchone()
 
     if not user:
         return RedirectResponse("/login", status_code=303)

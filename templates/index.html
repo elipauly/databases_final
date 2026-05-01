@@ -147,8 +147,8 @@
             <!-- SONG INFO -->
             <div class="song-title">{{ song.songName }}</div>
 
-            {% if song.album %}
-            <div class="meta">Album: {{ song.album.albumName }}</div>
+            {% if song.albumName %}
+            <div class="meta">Album: {{ song.albumName }}</div>
             {% endif %}
 
             <!-- REVIEWS -->
@@ -159,7 +159,7 @@
 
                 {% for r in song.ratings %}
                 <div class="review">
-                    <div class="review-user">{{ r.user.username }}</div>
+                    <div class="review-user">{{ r.username }}</div>
 
                     <div class="stars">
                         {% for i in range(r.rating) %}★{% endfor %}
@@ -178,9 +178,7 @@
                 <input type="hidden" name="song_id" value="{{ song.songID }}">
                 
                 <!--user logged in check-->
-                {% if user %}
-                    <input type="hidden" name="user_id" value="{{ user.userID }}">
-                {% else %}
+                {% if not user %}
                     <div class="meta">Login to review</div>
                 {% endif %}
                 

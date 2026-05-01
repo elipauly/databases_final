@@ -47,12 +47,17 @@
     <h2>My Friends</h2>
 
     <div class="box">
+        {% if error %}
+            <div style="color: red; font-weight: bold;">
+                Trigger message: {{ error }}
+            </div>
+        {% endif %}
         {% if friends|length == 0 %}
             <p>No friends added yet.</p>
         {% endif %}
         {% for f in friends %}
             <div>
-                <strong>{{ f.username }}</strong> ({{ f.email }})
+                <strong>{{ f.username }}</strong>
             </div>
             <form method="post" action="/remove-friend">
                 <input type="hidden" name="friend_id" value="{{ f.userID }}">
@@ -65,7 +70,7 @@
     <div class="box">
         <form method = "post" action ="/add-friend">
             <select name="friend_id">
-            {% for u in users %}
+            {% for u in available_users %}
                 <option value="{{ u.userID }}">
                     {{ u.username }}
                 </option>

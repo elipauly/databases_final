@@ -5,6 +5,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi.responses import RedirectResponse
 from sqlalchemy import text
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import OperationalError
 
 Base.metadata.create_all(bind=engine)
 
@@ -156,6 +157,35 @@ def delete_my_reviews(
     db.commit()
     return RedirectResponse("/", status_code=303)
 
+@app.get("/my-ratings")
+def my_ratings(request: Request, db: Session = Depends(get_db)):
+    user_id=request.cookies.get("user_id")
+    if not user_id:
+        return RedirectResponse("/login", status_code=303)
+    
+    result = db.execute(text("""
+        SELECT 
+            v.songName,
+            v.albumName,
+            v.artistName,
+            r.rating AS userRating,
+            r.comments,
+            fn_AvgRating(r.songID) AS overallAvgRating
+        FROM Ratings r
+        LEFT JOIN v_CurrentSongs v ON r.songID = v.songID
+        WHERE r.userID = :user_id;                       
+    """), {
+        "user_id": int(user_id)
+    }).fetchall()
+    return templates.TemplateResponse(
+        request,
+        "my_ratings.html",
+        {
+            "request":request,
+            "ratings": result
+        }
+    )
+
 
 @app.get("/login")
 def login_page(request: Request):
@@ -191,72 +221,71 @@ def logout():
     return response
 
 @app.get("/friends")
-def friends_page(request: Request, db:Session = Depends(get_db)):
-    user = get_current_user(request, db)
+def friends_page(request: Request, db: Session = Depends(get_db)):
+    user_id = request.cookies.get("user_id")
 
-    if not user:
+    if not user_id:
         return RedirectResponse("/login", status_code=303)
-    
-    friends = db.execute(text ("""
-        SELECT 
-            u.userID,
-            u.username,
-            u.email
+
+    error = request.query_params.get("error")
+
+    friends = db.execute(text("""
+        SELECT u.userID, u.username
         FROM Friends f
         JOIN User u ON f.friendID = u.userID
         WHERE f.userID = :user_id
-                               
-        UNION
-                               
-        SELECT u.userID, u.username, u.email
-        FROM Friends f
-        JOIN User u ON f.userID = u.userID
-        WHERE f.friendID = :user_id;
-    """), {
-        "user_id": user.userID
-    }).fetchall()
+    """), {"user_id": int(user_id)}).mappings().all()
 
-    users = db.execute(text("""
-        SELECT userID, username FROM User
-        WHERE userID != :user_id
-        """), {
-            "user_id": user.userID
-        }).fetchall()
+    available_users = db.execute(text("""
+    SELECT userID, username, email
+    FROM User
+    WHERE userID != :user_id
+    AND userID NOT IN (
+        SELECT friendID FROM Friends WHERE userID = :user_id
+    )
+"""), {"user_id": int(user_id)}).mappings().all()
+    
+
+    error = request.query_params.get("error")
     return templates.TemplateResponse(
         request,
         "friends.html",
         {
             "request": request,
             "friends": friends,
-            "users": users,
-            "user": user
+            "available_users": available_users,
+            "error": error
         }
     )
 
 @app.post("/add-friend")
-def add_friend(
-    request: Request,
-    friend_id: int = Form(...),
-    db: Session = Depends(get_db)
-):
-    user_id = request.cookies.get("user_id")
-    if not user_id:
-        return RedirectResponse("/login", status_code=303)
-    
-    db.execute(
-    text("""
-        INSERT INTO Friends (userID, friendID)
-        VALUES (:user_id, :friend_id)
-    """),
-    {
-        "user_id": int(user_id),
-        "friend_id": friend_id
-    }
-)
+async def add_friend(request: Request, db: Session = Depends(get_db)):
+    form = await request.form()
+    user_id = int(request.cookies.get("user_id"))
+    friend_id = int(form.get("friend_id"))
 
-    db.commit()
+    try:
+        db.execute(text("""
+            INSERT INTO Friends (userID, friendID)
+            VALUES (:user_id, :friend_id)
+        """), {
+            "user_id": user_id,
+            "friend_id": friend_id
+        })
+        db.commit()
 
-    return RedirectResponse("/friends", status_code=303)
+        return RedirectResponse("/friends", status_code=303)
+
+    except OperationalError as e:
+        db.rollback()
+
+        error_msg = str(e.orig.args[1]) if e.orig.args else "Unknown error"
+
+        return RedirectResponse(
+            f"/friends?error={error_msg}",
+            status_code=303
+    )
+    error = request.query_params.get("error")
 
 @app.post("/remove-friend")
 def remove_friend(

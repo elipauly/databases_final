@@ -98,7 +98,6 @@
             color: #ddd;
         }
 
-        /* FORM */
         .review-form {
             margin-top: auto;
             border-top: 1px solid #333;
@@ -137,6 +136,7 @@
     Release Radar
     <a href="/logout" style="color: #b2f15a;">Log out</a>
     <a href="/friends" style="color: #b2f15a;">Friends</a>
+    <a href="/my-ratings" style="color: #b2f15a;">My Ratings</a>
 </header>
 
 <div class="container">
@@ -190,7 +190,7 @@
                     <div class="meta">Login to review</div>
                 {% endif %}
                 
-                <input type="number" name="rating" min="1" max="5" placeholder="Rating (1-5)" required>
+                <input type="number" name="rating" placeholder="Rating (1-5)" required>
 
                 <textarea name="comments" placeholder="Write a comment..."></textarea>
 

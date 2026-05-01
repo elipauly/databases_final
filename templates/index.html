@@ -135,7 +135,8 @@
 
 <header>
     Release Radar
-    <a href="/logout">Log out</a>
+    <a href="/logout" style="color: #b2f15a;">Log out</a>
+    <a href="/friends" style="color: #b2f15a;">Friends</a>
 </header>
 
 <div class="container">
@@ -168,6 +169,13 @@
 
                     {% if r.comments %}
                     <div class="comment">"{{ r.comments }}"</div>
+                    {% endif %}
+
+                    {% if user and user.userID == r.userID %}
+                    <form method="post" action="/delete-review" style="display:inline;">
+                        <input type="hidden" name="song_id" value="{{ song.songID }}">
+                        <button type="submit" class="delete-btn">Delete</button>
+                    </form>
                     {% endif %}
                 </div>
                 {% endfor %}

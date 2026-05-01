@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>My Friends</title>
+    <style>
+        body {
+        font-family: "Hanken Grotesk", sans-serif;
+        font-optical-sizing: auto;
+        font-weight: 400;
+        font-style: normal;
+        margin: 0;
+        color:azure;
+        background-color: rgb(33, 33, 32);
+    }
+
+    header {
+        font-family: "Special Elite", system-ui;
+        font-weight: 400;
+        font-style: normal;
+        text-align: center;
+        font-size: 1.8rem;
+        padding: 20px;
+
+    }
+
+    .container {
+        max-width: 80vw;
+        margin: 30px auto;
+        padding: 0 20px;
+    }
+
+    .box {
+        background: rgb(64, 64, 62);
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+    }
+
+    select, button {
+        padding: 8px;
+        margin-top: 10px;
+    }
+    </style>
+</head>
+
+<body>
+    <h2>My Friends</h2>
+
+    <div class="box">
+        {% if friends|length == 0 %}
+            <p>No friends added yet.</p>
+        {% endif %}
+        {% for f in friends %}
+            <div>
+                <strong>{{ f.username }}</strong> ({{ f.email }})
+            </div>
+            <form method="post" action="/remove-friend">
+                <input type="hidden" name="friend_id" value="{{ f.userID }}">
+                <button type="submit" class="remove-btn">Remove Friend</button>
+            </form>
+        {% endfor %}
+    </div>
+
+    <h3>Add Friend</h3>
+    <div class="box">
+        <form method = "post" action ="/add-friend">
+            <select name="friend_id">
+            {% for u in users %}
+                <option value="{{ u.userID }}">
+                    {{ u.username }}
+                </option>
+            {% endfor %}
+            </select>
+            <button type="submit">Add Friend</button>
+        </form>
+    </div>
+
+    <a href="/" style="color: #b2f15a;">Return to Feed</a>
+
+</body>
+
+</html>

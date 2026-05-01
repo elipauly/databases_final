@@ -26,7 +26,7 @@ def get_current_user(request: Request, db: Session):
     result = db.execute(text("""
         SELECT * FROM User WHERE userID = :id """)
         , {"id": int(user_id)}).fetchone()
-
+    
     return result
         
 
@@ -42,6 +42,7 @@ def home(request: Request, db: Session = Depends(get_db)):
             a.albumName,
             r.rating,
             r.comments,
+            r.userID,
             u.username
         FROM Song s
         LEFT JOIN Album a ON s.albumID = a.albumID
@@ -64,6 +65,7 @@ def home(request: Request, db: Session = Depends(get_db)):
             }
         if row.rating is not None:
             songs_dict[song_id]["ratings"].append({
+                "userID": row.userID,
                 "username": row.username,
                 "rating": row.rating,
                 "comments": row.comments
@@ -133,6 +135,28 @@ def add_rating(
 
     return RedirectResponse("/", status_code=303)
 
+@app.post("/delete-review")
+def delete_my_reviews(
+    request: Request,
+    song_id: int = Form(...),
+    db: Session = Depends(get_db)
+):
+    user_id = request.cookies.get("user_id")
+    
+    if not user_id:
+        return RedirectResponse("/login", status_code=303)
+    
+    db.execute(text("""
+        DELETE FROM Ratings
+        WHERE userID = :user_id AND songID = :song_id;
+    """), {
+        "user_id": int(user_id),
+        "song_id": song_id
+    })
+    db.commit()
+    return RedirectResponse("/", status_code=303)
+
+
 @app.get("/login")
 def login_page(request: Request):
     return templates.TemplateResponse(
@@ -165,3 +189,92 @@ def logout():
     response = RedirectResponse("/login", status_code=303)
     response.delete_cookie("user_id")
     return response
+
+@app.get("/friends")
+def friends_page(request: Request, db:Session = Depends(get_db)):
+    user = get_current_user(request, db)
+
+    if not user:
+        return RedirectResponse("/login", status_code=303)
+    
+    friends = db.execute(text ("""
+        SELECT 
+            u.userID,
+            u.username,
+            u.email
+        FROM Friends f
+        JOIN User u ON f.friendID = u.userID
+        WHERE f.userID = :user_id
+                               
+        UNION
+                               
+        SELECT u.userID, u.username, u.email
+        FROM Friends f
+        JOIN User u ON f.userID = u.userID
+        WHERE f.friendID = :user_id;
+    """), {
+        "user_id": user.userID
+    }).fetchall()
+
+    users = db.execute(text("""
+        SELECT userID, username FROM User
+        WHERE userID != :user_id
+        """), {
+            "user_id": user.userID
+        }).fetchall()
+    return templates.TemplateResponse(
+        request,
+        "friends.html",
+        {
+            "request": request,
+            "friends": friends,
+            "users": users,
+            "user": user
+        }
+    )
+
+@app.post("/add-friend")
+def add_friend(
+    request: Request,
+    friend_id: int = Form(...),
+    db: Session = Depends(get_db)
+):
+    user_id = request.cookies.get("user_id")
+    if not user_id:
+        return RedirectResponse("/login", status_code=303)
+    
+    db.execute(
+    text("""
+        INSERT INTO Friends (userID, friendID)
+        VALUES (:user_id, :friend_id)
+    """),
+    {
+        "user_id": int(user_id),
+        "friend_id": friend_id
+    }
+)
+
+    db.commit()
+
+    return RedirectResponse("/friends", status_code=303)
+
+@app.post("/remove-friend")
+def remove_friend(
+    request: Request,
+    friend_id: int = Form(...),
+    db: Session = Depends(get_db)
+):
+    user_id = request.cookies.get("user_id")
+    if not user_id:
+        return RedirectResponse("/login", status_code=303)
+    
+    db.execute(text("""
+        DELETE FROM Friends
+        WHERE (userID = :user_id AND friendID = :friend_id)
+        OR (userID = :friend_id AND friendID = :user_id)
+    """), {
+        "user_id": int(user_id),
+        "friend_id": friend_id
+    })
+    db.commit()
+    return RedirectResponse("/friends", status_code=303)

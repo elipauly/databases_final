@@ -104,8 +104,44 @@ def create_user(
     return RedirectResponse("/login", status_code=303)
 
 @app.get("/users/")
-def get_users(db: Session = Depends(get_db)):
-    return db.query(User).all()
+def users_page(request: Request, db: Session = Depends(get_db)):
+    result = db.execute(text("""
+        SELECT userID, username, email
+        FROM User
+        ORDER BY userID
+    """)).mappings().all()
+
+    created_email = request.query_params.get("email")
+
+    return templates.TemplateResponse(
+        request,
+        "users.html",
+        {
+            "request": request,
+            "users": result,
+            "created_email": created_email
+        }
+    )
+
+@app.post("/users/add")
+def add_user(
+    request: Request,
+    username: str = Form(...),
+    email: str = Form(...),
+    password: str = Form(...),
+    db: Session = Depends(get_db)
+):
+    db.execute(text("""
+        CALL sp_AddUser(:username, :email, :password)
+    """), {
+        "username": username,
+        "email": email,
+        "password": password
+    })
+
+    db.commit()
+
+    return RedirectResponse("/users?created=1&email=" + email, status_code=303)
 
 @app.post("/ratings")
 def add_rating(

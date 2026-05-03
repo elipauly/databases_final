@@ -77,6 +77,16 @@
             grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
             gap: 20px;
         }
+        .split {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        .column {
+            display: flex;
+            flex-direction: column;
+        }
         .reviews {
             margin-top: 10px;
             border-top: 1px solid #333;
@@ -140,66 +150,119 @@
 </header>
 
 <div class="container">
-    <div class="grid">
+    <div class="split">
 
-        {% for song in songs %}
-        <div class="card">
+        <div class="column">
+             <h2>Songs</h2>
 
-            <!-- SONG INFO -->
-            <div class="song-title">{{ song.songName }}</div>
+            {% for song in songs %}
+            <div class="card">
 
-            {% if song.albumName %}
-            <div class="meta">Album: {{ song.albumName }}</div>
-            {% endif %}
+                <!-- SONG INFO -->
+                <div class="song-title">{{ song.songName }}</div>
 
-            <!-- REVIEWS -->
-            <div class="reviews">
-                {% if song.ratings|length == 0 %}
-                    <div class="meta">No reviews yet</div>
+                {% if song.albumName %}
+                <div class="meta">Album: {{ song.albumName }}</div>
                 {% endif %}
 
-                {% for r in song.ratings %}
-                <div class="review">
-                    <div class="review-user">{{ r.username }}</div>
+                <!-- REVIEWS -->
+                <div class="reviews">
+                    {% if song.ratings|length == 0 %}
+                        <div class="meta">No reviews yet</div>
+                    {% endif %}
 
-                    <div class="stars">
-                        {% for i in range(r.rating) %}★{% endfor %}
-                        ({{ r.rating }})
+                    {% for r in song.ratings %}
+                    <div class="review">
+                        <div class="review-user">{{ r.username }}</div>
+
+                        <div class="stars">
+                            {% for i in range(r.rating) %}★{% endfor %}
+                            ({{ r.rating }})
+                        </div>
+
+                        {% if r.comments %}
+                        <div class="comment">"{{ r.comments }}"</div>
+                        {% endif %}
+
+                        {% if user and user.userID == r.userID %}
+                        <form method="post" action="/delete-review" style="display:inline;">
+                            <input type="hidden" name="song_id" value="{{ song.songID }}">
+                            <button type="submit" class="delete-btn">Delete</button>
+                        </form>
+                        {% endif %}
                     </div>
-
-                    {% if r.comments %}
-                    <div class="comment">"{{ r.comments }}"</div>
-                    {% endif %}
-
-                    {% if user and user.userID == r.userID %}
-                    <form method="post" action="/delete-review" style="display:inline;">
-                        <input type="hidden" name="song_id" value="{{ song.songID }}">
-                        <button type="submit" class="delete-btn">Delete</button>
-                    </form>
-                    {% endif %}
+                    {% endfor %}
                 </div>
-                {% endfor %}
+
+                <!-- ADD REVIEW -->
+                <form class="review-form" method="post" action="/ratings">
+                    <input type="hidden" name="song_id" value="{{ song.songID }}">
+                    
+                    <!--user logged in check-->
+                    {% if not user %}
+                        <div class="meta">Login to review</div>
+                    {% endif %}
+                    
+                    <input type="number" name="rating" placeholder="Rating (1-5)" required>
+
+                    <textarea name="comments" placeholder="Write a comment..."></textarea>
+
+                    <button type="submit">Add Review</button>
+                </form>
+
             </div>
-
-            <!-- ADD REVIEW -->
-            <form class="review-form" method="post" action="/ratings">
-                <input type="hidden" name="song_id" value="{{ song.songID }}">
-                
-                <!--user logged in check-->
-                {% if not user %}
-                    <div class="meta">Login to review</div>
-                {% endif %}
-                
-                <input type="number" name="rating" placeholder="Rating (1-5)" required>
-
-                <textarea name="comments" placeholder="Write a comment..."></textarea>
-
-                <button type="submit">Add Review</button>
-            </form>
+            {% endfor %}
 
         </div>
-        {% endfor %}
+        <div class="column">
+            <h2>Albums</h2>
 
+            {% for album in albums %}
+            <div class="card">
+                <div class="song-title">{{ album.albumName }}</div>
+                <div class="meta">{{ album.artistName }}</div>
+
+                <div class="reviews">
+                    {% for r in album.ratings %}
+                    <div class="review">
+                        <div class="review-user">{{ r.username }}</div>
+                        <div class="stars">
+                            {% for i in range(r.rating) %}★{% endfor %}
+                        </div>
+                        {% if r.comments %}
+                        <div class="comment">"{{ r.comments }}"</div>
+                        {% endif %}
+
+                        {% if user and user.userID == r.userID %}
+                        <form method="post" action="/delete-album-review" style="display:inline;">
+                            <input type="hidden" name="album_id" value="{{ album.albumID }}">
+                            <button type="submit" class="delete-btn">Delete</button>
+                        </form>
+                        {% endif %}
+
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- ADD REVIEW -->
+                <form class="review-form" method="post" action="/album-ratings">
+                    <input type="hidden" name="album_id" value="{{ album.albumID }}">
+                    
+                    <!--user logged in check-->
+                    {% if not user %}
+                        <div class="meta">Login to review</div>
+                    {% endif %}
+                    
+                    <input type="number" name="rating" placeholder="Rating (1-5)" required>
+
+                    <textarea name="comments" placeholder="Write a comment..."></textarea>
+
+                    <button type="submit">Add Review</button>
+                </form>
+                
+            </div>
+            {% endfor %}
+        </div>
     </div>
 </div>
 

@@ -36,7 +36,8 @@ def home(request: Request, db: Session = Depends(get_db)):
 
     user = get_current_user(request, db)
 
-    result = db.execute(text("""
+    #song rating list
+    song_result = db.execute(text("""
         SELECT 
             s.songID,
             s.songName,
@@ -54,7 +55,7 @@ def home(request: Request, db: Session = Depends(get_db)):
 
     #formatting to frontend
     songs_dict = {}
-    for row in result:
+    for row in song_result:
         song_id = row.songID
 
         if song_id not in songs_dict:
@@ -73,12 +74,51 @@ def home(request: Request, db: Session = Depends(get_db)):
             })
     songs = list(songs_dict.values())
 
+    #album rating list
+    album_result = db.execute(text("""
+        SELECT 
+            al.albumID,
+            al.albumName,
+            ar.artistName,
+            r.rating,
+            r.comments,
+            r.userID,
+            u.username
+        FROM Album al
+        LEFT JOIN AlbumRatings r ON al.albumID = r.albumID
+        LEFT JOIN User u ON r.userID = u.userID
+        LEFT JOIN artistMakesAlbum ama ON al.albumID = ama.albumID
+        LEFT JOIN Artist ar ON ama.artistID = ar.artistID
+        ORDER BY al.albumID
+    """)).fetchall()
+
+    albums_dict = {}
+    for row in album_result:
+        if row.albumID not in albums_dict:
+            albums_dict[row.albumID] = {
+                "albumID": row.albumID,
+                "albumName": row.albumName,
+                "artistName": row.artistName,
+                "ratings": []
+            }
+
+        if row.rating is not None:
+            albums_dict[row.albumID]["ratings"].append({
+                "userID": row.userID,
+                "username": row.username,
+                "rating": row.rating,
+                "comments": row.comments
+            })
+
+    albums = list(albums_dict.values())
+
     return templates.TemplateResponse(
         request,
         "index.html",
         {
             "request": request,
             "songs": songs,
+            "albums": albums,
             "user": user
         }
     )
@@ -143,6 +183,7 @@ def add_user(
 
     return RedirectResponse("/users?created=1&email=" + email, status_code=303)
 
+#song ratings
 @app.post("/ratings")
 def add_rating(
     request: Request,
@@ -193,6 +234,59 @@ def delete_my_reviews(
     db.commit()
     return RedirectResponse("/", status_code=303)
 
+#album ratings
+@app.post("/album-ratings")
+def add_album_rating(
+    request: Request,
+    album_id: int = Form(...),
+    rating: int = Form(...),
+    comments: str = Form(""),
+    db: Session = Depends(get_db)
+):
+    user_id = request.cookies.get("user_id")
+
+    if not user_id:
+        return RedirectResponse("/login", status_code=303)
+
+    db.execute(text("""
+        INSERT INTO AlbumRatings (userID, albumID, rating, comments)
+        VALUES (:user_id, :album_id, :rating, :comments)
+        ON DUPLICATE KEY UPDATE
+            rating = :rating,
+            comments = :comments
+    """), {
+        "user_id": int(user_id),
+        "album_id": album_id,
+        "rating": rating,
+        "comments": comments
+    })
+
+    db.commit()
+
+    return RedirectResponse("/", status_code=303)
+
+@app.post("/delete-album-review")
+def delete_album_reviews(
+    request: Request,
+    album_id: int = Form(...),
+    db: Session = Depends(get_db)
+):
+    user_id = request.cookies.get("user_id")
+    
+    if not user_id:
+        return RedirectResponse("/login", status_code=303)
+    
+    db.execute(text("""
+        DELETE FROM AlbumRatings
+        WHERE userID = :user_id AND albumID = :album_id;
+    """), {
+        "user_id": int(user_id),
+        "album_id": album_id
+    })
+    db.commit()
+    return RedirectResponse("/", status_code=303)
+
+#my ratings
 @app.get("/my-ratings")
 def my_ratings(request: Request, db: Session = Depends(get_db)):
     user_id=request.cookies.get("user_id")

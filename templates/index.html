@@ -282,7 +282,23 @@
                         ({{ album.avgRating }})
                     </div>
                 </div>
+<strong>Friends</strong>
 
+    {% if album.friendRatings|length == 0 %}
+        <div class="meta">No friend ratings</div>
+    {% endif %}
+
+    {% for r in album.friendRatings %}
+    <div class="review">
+        <div class="review-user">{{ r.username }}</div>
+        <div class="stars">
+            {% for i in range(r.rating) %}★{% endfor %}
+        </div>
+        {% if r.comments %}
+        <div class="comment">"{{ r.comments }}"</div>
+        {% endif %}
+    </div>
+    {% endfor %}
                 <div class="reviews">
                     {% for r in album.ratings %}
                     <div class="review">

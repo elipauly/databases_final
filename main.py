@@ -114,33 +114,41 @@ def home(request: Request, db: Session = Depends(get_db)):
     #album rating list
     album_result = db.execute(text("""
         SELECT 
-            al.albumID,
-            al.albumName,
-            MAX(ar.artistName) AS artistName,
+            s.albumID,
+            s.albumName,
+            ar.artistName,
             ur.rating AS userRating,
             ur.comments AS userComments,
-            ROUND(AVG(r.rating), 2) AS avgRating,
+            
+            fn_AvgAlbumRating(s.albumID) AS avgRating,
+                
             r.rating,
             r.comments,
             r.userID,
-            u.username
-        FROM Album al
-        LEFT JOIN artistMakesAlbum ama ON al.albumID = ama.albumID
+            u.username,
+                                  
+            fr.rating as friendRating,
+            fr.comments as friendComments,
+            fu.username as friendUsername                
+        FROM Album s
+        LEFT JOIN artistMakesAlbum ama ON s.albumID = ama.albumID
         LEFT JOIN Artist ar ON ama.artistID = ar.artistID
-        LEFT JOIN AlbumRatings ur 
-            ON al.albumID = ur.albumID AND ur.userID = :user_id
+        LEFT JOIN AlbumRatings ur ON s.albumID = ur.albumID AND ur.userID = :user_id
         LEFT JOIN AlbumRatings r 
-            ON al.albumID = r.albumID
+            ON s.albumID = r.albumID
             AND r.userID NOT IN (
                 SELECT friendID FROM Friends WHERE userID = :user_id
             )
             AND r.userID != :user_id
+
         LEFT JOIN User u ON r.userID = u.userID
-        GROUP BY 
-            al.albumID, al.albumName,
-            ur.rating, ur.comments,
-            r.rating, r.comments, r.userID, u.username
-        ORDER BY al.albumID
+        LEFT JOIN AlbumRatings fr 
+            ON s.albumID = fr.albumID 
+            AND fr.userID IN (
+                SELECT friendID FROM Friends WHERE userID = :user_id
+            )
+        LEFT JOIN User fu ON fr.userID = fu.userID                        
+        ORDER BY s.albumID                           
     """), {
         "user_id": user.userID if user else -1
     }).fetchall()
@@ -153,18 +161,31 @@ def home(request: Request, db: Session = Depends(get_db)):
                 "albumName": row.albumName,
                 "artistName": row.artistName,
                 "ratings": [],
+                "friendRatings": [],
                 "userRating": row.userRating,
                 "userComments": row.userComments,
                 "avgRating": row.avgRating
             }
 
+        if row.friendRating is not None:
+            existing = albums_dict[row.albumID]["friendRatings"]
+            if not any(fr["username"] == row.friendUsername for fr in existing):
+                existing.append({
+                    "username": row.friendUsername,
+                    "rating": row.friendRating,
+                    "comments": row.friendComments
+                })
+
         if row.rating is not None:
-            albums_dict[row.albumID]["ratings"].append({
-                "userID": row.userID,
-                "username": row.username,
-                "rating": row.rating,
-                "comments": row.comments
+            existing = albums_dict[row.albumID]["ratings"]
+            if not any(r["userID"] == row.userID for r in existing):
+                existing.append({
+                    "userID": row.userID,
+                    "username": row.username,
+                    "rating": row.rating,
+                    "comments": row.comments
             })
+
 
     albums = list(albums_dict.values())
 

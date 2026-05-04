@@ -53,7 +53,6 @@
         }
 
         .meta {
-            margin: 5px;
             color:azure;
         }
         .rating {
@@ -131,22 +130,18 @@
             border: none;
             border-radius: 6px;
             background: #b2f15a;
-            color: white;
+            color: #2a2a2a;
             font-weight: bold;
             cursor: pointer;
-        }
-
-        .review-form button:hover {
-            background: #b2f15a;
         }
     </style>
 </head>
 
 <header>
-    SONAR
-    <a href="/logout" style="color: #b2f15a;">Log out</a>
-    <a href="/friends" style="color: #b2f15a;">Friends</a>
-    <a href="/my-ratings" style="color: #b2f15a;">My Ratings</a>
+    <a style="float: left;">SONAR</a>
+    <a href="/logout" style="color: #b2f15a; float: right;text-decoration: none;">Log out</a>
+    <a href="/friends" style="color: #b2f15a; padding: 30px;text-decoration: none;">Friends</a>
+    <a href="/my-ratings" style="color: #b2f15a;text-decoration: none;">My Ratings</a>
 </header>
 
 <div class="container">
@@ -157,12 +152,10 @@
 
             {% for song in songs %}
             <div class="card">
-
-                <!-- SONG INFO -->
                 <div class="song-title">{{ song.songName }}</div>
 
                 {% if song.albumName %}
-                <div class="meta">Album: {{ song.albumName }}</div>
+                <div class="meta">{{ song.albumName }}</div>
                 {% endif %}
 
                 <div class="rating">
@@ -179,15 +172,13 @@
                     </div>
 
                     <div>
-                        <strong>Global Avg:</strong>
+                        <strong>Average Rating: </strong>
                         <span class="stars">
                             {% for i in range(song.avgRating|int) %}★{% endfor %}
                         </span>
                         ({{ song.avgRating }})
                     </div>
                 </div>
-
-                <!-- REVIEWS -->
                 <div class="reviews">
                     {% if song.ratings|length == 0 %}
                         <div class="meta">No reviews yet</div>
@@ -275,30 +266,31 @@
                     </div>
 
                     <div>
-                        <strong>Global Avg:</strong>
+                        <strong>Average Rating: </strong>
                         <span class="stars">
                             {% for i in range(album.avgRating|int) %}★{% endfor %}
                         </span>
                         ({{ album.avgRating }})
                     </div>
                 </div>
-<strong>Friends</strong>
 
-    {% if album.friendRatings|length == 0 %}
-        <div class="meta">No friend ratings</div>
-    {% endif %}
+                <strong>Friends</strong>
+                    {% if album.friendRatings|length == 0 %}
+                        <div class="meta">No friend ratings</div>
+                    {% endif %}
 
-    {% for r in album.friendRatings %}
-    <div class="review">
-        <div class="review-user">{{ r.username }}</div>
-        <div class="stars">
-            {% for i in range(r.rating) %}★{% endfor %}
-        </div>
-        {% if r.comments %}
-        <div class="comment">"{{ r.comments }}"</div>
-        {% endif %}
-    </div>
-    {% endfor %}
+                    {% for r in album.friendRatings %}
+                    <div class="review">
+                        <div class="review-user">{{ r.username }}</div>
+                        <div class="stars">
+                            {% for i in range(r.rating) %}★{% endfor %}
+                        </div>
+                        {% if r.comments %}
+                        <div class="comment">"{{ r.comments }}"</div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+
                 <div class="reviews">
                     {% for r in album.ratings %}
                     <div class="review">
@@ -321,7 +313,7 @@
                     {% endfor %}
                 </div>
 
-                <!-- ADD REVIEW -->
+                <!-- add album review -->
                 <form class="review-form" method="post" action="/album-ratings">
                     <input type="hidden" name="album_id" value="{{ album.albumID }}">
                     
@@ -331,9 +323,7 @@
                     {% endif %}
                     
                     <input type="number" name="rating" placeholder="Rating (1-5)" required>
-
                     <textarea name="comments" placeholder="Write a comment..."></textarea>
-
                     <button type="submit">Add Review</button>
                 </form>
                 

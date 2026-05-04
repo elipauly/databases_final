@@ -4,46 +4,66 @@
     <title>My Friends</title>
     <style>
         body {
-        font-family: "Hanken Grotesk", sans-serif;
-        font-optical-sizing: auto;
-        font-weight: 400;
-        font-style: normal;
-        margin: 0;
-        color:azure;
-        background-color: rgb(33, 33, 32);
-    }
+            font-family: "Hanken Grotesk", sans-serif;
+            font-optical-sizing: auto;
+            font-weight: 400;
+            font-style: normal;
+            margin: 0;
+            color:azure;
+            background-color: rgb(33, 33, 32);
+        }
 
-    header {
-        font-family: "Special Elite", system-ui;
-        font-weight: 400;
-        font-style: normal;
-        text-align: center;
-        font-size: 1.8rem;
-        padding: 20px;
+        header {
+            font-family: "Hanken Grotesk", sans-serif;
+            font-weight: 400;
+            font-style: normal;
+            text-align: center;
+            font-size: 1.8rem;
+            padding: 20px;
+        }
+        .container {
+            max-width: 80vw;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
 
-    }
+        .box {
+            background: rgb(64, 64, 62);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 30px;
+        }
 
-    .container {
-        max-width: 80vw;
-        margin: 30px auto;
-        padding: 0 20px;
-    }
+        select, button {
+            padding: 8px;
+            margin-top: 10px;
+        }
+        h2 {
+            margin-left: 30px;
+        }
+        button {
+            width: 13%;
+            padding: 5px;
+            border: none;
+            border-radius: 6px;
+            background: #b2f15a;
+            color: #2a2a2a;
+            font-weight: bold;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
 
-    .box {
-        background: rgb(64, 64, 62);
-        padding: 20px;
-        border-radius: 10px;
-        margin-bottom: 20px;
-    }
-
-    select, button {
-        padding: 8px;
-        margin-top: 10px;
-    }
     </style>
 </head>
 
 <body>
+    <header>
+        <a href="/" style="color: azure; float: left; text-decoration: none;">SONAR</a>
+        <a href="/logout" style="color: #b2f15a; float: right;text-decoration: none;">Log out</a>
+        <a href="/friends" style="color: #b2f15a; padding: 30px;text-decoration: none;">Friends</a>
+        <a href="/my-ratings" style="color: #b2f15a;text-decoration: none;">My Ratings</a>
+    </header>
+
     <h2>My Friends</h2>
 
     <div class="box">
@@ -66,9 +86,9 @@
         {% endfor %}
     </div>
 
-    <h3>Add Friend</h3>
+    <h2>Add Friend</h2>
     <div class="box">
-        <form method = "post" action ="/add-friend">
+        <form method="post" action="/add-friend">
             <select name="friend_id">
             {% for u in available_users %}
                 <option value="{{ u.userID }}">
@@ -79,8 +99,6 @@
             <button type="submit">Add Friend</button>
         </form>
     </div>
-
-    <a href="/" style="color: #b2f15a;">Return to Feed</a>
 
 </body>
 

@@ -19,7 +19,7 @@
         }
 
         header {
-            font-family: "Special Elite", system-ui;
+            font-family: "Hanken Grotesk", sans-serif;
             font-weight: 400;
             font-style: normal;
             text-align: center;
@@ -143,7 +143,7 @@
 </head>
 
 <header>
-    Release Radar
+    SONAR
     <a href="/logout" style="color: #b2f15a;">Log out</a>
     <a href="/friends" style="color: #b2f15a;">Friends</a>
     <a href="/my-ratings" style="color: #b2f15a;">My Ratings</a>
@@ -165,11 +165,51 @@
                 <div class="meta">Album: {{ song.albumName }}</div>
                 {% endif %}
 
+                <div class="rating">
+                    <div>
+                        <strong>Your Rating:</strong>
+                        {% if song.userRating %}
+                            <span class="stars">
+                                {% for i in range(song.userRating) %}★{% endfor %}
+                            </span>
+                            ({{ song.userRating }})
+                        {% else %}
+                            Not rated
+                        {% endif %}
+                    </div>
+
+                    <div>
+                        <strong>Global Avg:</strong>
+                        <span class="stars">
+                            {% for i in range(song.avgRating|int) %}★{% endfor %}
+                        </span>
+                        ({{ song.avgRating }})
+                    </div>
+                </div>
+
                 <!-- REVIEWS -->
                 <div class="reviews">
                     {% if song.ratings|length == 0 %}
                         <div class="meta">No reviews yet</div>
                     {% endif %}
+
+                    <strong>Friends</strong>
+
+    {% if song.friendRatings|length == 0 %}
+        <div class="meta">No friend ratings</div>
+    {% endif %}
+
+    {% for r in song.friendRatings %}
+    <div class="review">
+        <div class="review-user">{{ r.username }}</div>
+        <div class="stars">
+            {% for i in range(r.rating) %}★{% endfor %}
+        </div>
+        {% if r.comments %}
+        <div class="comment">"{{ r.comments }}"</div>
+        {% endif %}
+    </div>
+    {% endfor %}
 
                     {% for r in song.ratings %}
                     <div class="review">
@@ -221,6 +261,27 @@
             <div class="card">
                 <div class="song-title">{{ album.albumName }}</div>
                 <div class="meta">{{ album.artistName }}</div>
+                <div class="rating">
+                    <div>
+                        <strong>Your Rating:</strong>
+                        {% if album.userRating %}
+                            <span class="stars">
+                                {% for i in range(album.userRating) %}★{% endfor %}
+                            </span>
+                            ({{ album.userRating }})
+                        {% else %}
+                            Not rated
+                        {% endif %}
+                    </div>
+
+                    <div>
+                        <strong>Global Avg:</strong>
+                        <span class="stars">
+                            {% for i in range(album.avgRating|int) %}★{% endfor %}
+                        </span>
+                        ({{ album.avgRating }})
+                    </div>
+                </div>
 
                 <div class="reviews">
                     {% for r in album.ratings %}

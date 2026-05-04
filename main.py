@@ -42,16 +42,40 @@ def home(request: Request, db: Session = Depends(get_db)):
             s.songID,
             s.songName,
             a.albumName,
+            ur.rating AS userRating,
+            ur.comments AS userComments,
+            
+            fn_AvgRating(s.songID) AS avgRating,
+                
             r.rating,
             r.comments,
             r.userID,
-            u.username
+            u.username,
+                                  
+            fr.rating as friendRating,
+            fr.comments as friendComments,
+            fu.username as friendUsername                
         FROM Song s
         LEFT JOIN Album a ON s.albumID = a.albumID
-        LEFT JOIN Ratings r ON s.songID = r.songID
+        LEFT JOIN Ratings ur ON s.songID = ur.songID AND ur.userID = :user_id
+        LEFT JOIN Ratings r 
+            ON s.songID = r.songID
+            AND r.userID NOT IN (
+                SELECT friendID FROM Friends WHERE userID = :user_id
+            )
+            AND r.userID != :user_id
+
         LEFT JOIN User u ON r.userID = u.userID
+        LEFT JOIN Ratings fr 
+            ON s.songID = fr.songID 
+            AND fr.userID IN (
+                SELECT friendID FROM Friends WHERE userID = :user_id
+            )
+        LEFT JOIN User fu ON fr.userID = fu.userID                        
         ORDER BY s.songID
-    """)).fetchall()
+    """), {
+        "user_id": user.userID if user else -1
+    }).fetchall()
 
     #formatting to frontend
     songs_dict = {}
@@ -63,7 +87,11 @@ def home(request: Request, db: Session = Depends(get_db)):
                 "songID": song_id,
                 "songName": row.songName,
                 "albumName": row.albumName,
-                "ratings": []
+                "ratings": [],
+                "friendRatings": [],
+                "userRating": row.userRating,
+                "userComments": row.userComments,
+                "avgRating": row.avgRating
             }
         if row.rating is not None:
             songs_dict[song_id]["ratings"].append({
@@ -72,6 +100,15 @@ def home(request: Request, db: Session = Depends(get_db)):
                 "rating": row.rating,
                 "comments": row.comments
             })
+
+        if row.friendRating is not None:
+            existing = songs_dict[song_id]["friendRatings"]
+            if not any(fr["username"] == row.friendUsername for fr in existing):
+                existing.append({
+                    "username": row.friendUsername,
+                    "rating": row.friendRating,
+                    "comments": row.friendComments
+                })
     songs = list(songs_dict.values())
 
     #album rating list
@@ -79,18 +116,34 @@ def home(request: Request, db: Session = Depends(get_db)):
         SELECT 
             al.albumID,
             al.albumName,
-            ar.artistName,
+            MAX(ar.artistName) AS artistName,
+            ur.rating AS userRating,
+            ur.comments AS userComments,
+            ROUND(AVG(r.rating), 2) AS avgRating,
             r.rating,
             r.comments,
             r.userID,
             u.username
         FROM Album al
-        LEFT JOIN AlbumRatings r ON al.albumID = r.albumID
-        LEFT JOIN User u ON r.userID = u.userID
         LEFT JOIN artistMakesAlbum ama ON al.albumID = ama.albumID
         LEFT JOIN Artist ar ON ama.artistID = ar.artistID
+        LEFT JOIN AlbumRatings ur 
+            ON al.albumID = ur.albumID AND ur.userID = :user_id
+        LEFT JOIN AlbumRatings r 
+            ON al.albumID = r.albumID
+            AND r.userID NOT IN (
+                SELECT friendID FROM Friends WHERE userID = :user_id
+            )
+            AND r.userID != :user_id
+        LEFT JOIN User u ON r.userID = u.userID
+        GROUP BY 
+            al.albumID, al.albumName,
+            ur.rating, ur.comments,
+            r.rating, r.comments, r.userID, u.username
         ORDER BY al.albumID
-    """)).fetchall()
+    """), {
+        "user_id": user.userID if user else -1
+    }).fetchall()
 
     albums_dict = {}
     for row in album_result:
@@ -99,7 +152,10 @@ def home(request: Request, db: Session = Depends(get_db)):
                 "albumID": row.albumID,
                 "albumName": row.albumName,
                 "artistName": row.artistName,
-                "ratings": []
+                "ratings": [],
+                "userRating": row.userRating,
+                "userComments": row.userComments,
+                "avgRating": row.avgRating
             }
 
         if row.rating is not None:
@@ -193,6 +249,7 @@ def add_rating(
     db: Session = Depends(get_db)
 ):
     user_id = request.cookies.get("user_id")
+    user_id = int(user_id) if user_id else -1
     if not user_id:
         return RedirectResponse("/login", status_code=303)
 
@@ -305,7 +362,7 @@ def my_ratings(request: Request, db: Session = Depends(get_db)):
         LEFT JOIN v_CurrentSongs v ON r.songID = v.songID
         WHERE r.userID = :user_id;                       
     """), {
-        "user_id": int(user_id)
+        "user_id": user_id
     }).fetchall()
     return templates.TemplateResponse(
         request,

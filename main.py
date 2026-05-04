@@ -371,7 +371,7 @@ def my_ratings(request: Request, db: Session = Depends(get_db)):
     if not user_id:
         return RedirectResponse("/login", status_code=303)
     
-    result = db.execute(text("""
+    song_results = db.execute(text("""
         SELECT 
             v.songName,
             v.albumName,
@@ -385,12 +385,29 @@ def my_ratings(request: Request, db: Session = Depends(get_db)):
     """), {
         "user_id": user_id
     }).fetchall()
+    album_results = db.execute(text("""
+        SELECT 
+                al.albumName,
+                GROUP_CONCAT(ar.artistName SEPARATOR ', ') AS artistName,
+                r.rating AS userRating,
+                r.comments,
+                fn_AvgAlbumRating(r.albumID) AS overallAvgRating
+            FROM AlbumRatings r
+            JOIN Album al ON r.albumID = al.albumID
+            LEFT JOIN artistMakesAlbum ama ON al.albumID = ama.albumID
+            LEFT JOIN Artist ar ON ama.artistID = ar.artistID
+            WHERE r.userID = :user_id
+            GROUP BY al.albumID, r.rating, r.comments;                                               
+        """), {
+            "user_id": user_id
+    }).fetchall()                                
     return templates.TemplateResponse(
         request,
         "my_ratings.html",
         {
             "request":request,
-            "ratings": result
+            "song_ratings": song_results,
+            "album_ratings": album_results
         }
     )
 

@@ -141,7 +141,7 @@
 
     <h2>My Ratings</h2>
     <div class="grid">
-        {% for r in ratings %}
+        {% for r in song_ratings %}
         <div class="card">
             <div class = "title">{{ r.songName }} </div>
 
@@ -163,6 +163,30 @@
             </div>
         </div>
         {% endfor %}
+
+        {% for r in album_ratings %}
+    <div class="card">
+        <div class="title">{{ r.albumName }}</div>
+
+        <div class="meta">{{ r.artistName }}</div>
+
+        <div class="rating">
+            My Rating:
+            <span class="stars">
+                {% for i in range(r.userRating) %}★{% endfor %}
+            </span>
+            ({{ r.userRating }})
+            <br />
+            Avg Rating: {{ r.overallAvgRating }}
+        </div>
+
+        {% if r.comments %}
+        <div class="meta" style="margin-top: 10px;">
+            My Comment: {{ r.comments }}
+        </div>
+        {% endif %}
+    </div>
+    {% endfor %}
     </div>
 </body>
 

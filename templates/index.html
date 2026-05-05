@@ -1,12 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>Music Rating App</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Mono&family=Hanken+Grotesk:ital,wght@0,100..900;1,100..900&family=Open+Sans&family=PT+Serif:ital,wght@0,400;0,700;1,400;1,700&family=Space+Grotesk:wght@300..700&family=Special+Elite&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=DM+Mono&family=Hanken+Grotesk:ital,wght@0,100..900;1,100..900&family=Open+Sans&family=PT+Serif:ital,wght@0,400;0,700;1,400;1,700&family=Space+Grotesk:wght@300..700&family=Special+Elite&display=swap"
+        rel="stylesheet">
     <style>
         body {
             font-family: "Hanken Grotesk", sans-serif;
@@ -14,7 +17,7 @@
             font-weight: 400;
             font-style: normal;
             margin: 0;
-            color:azure;
+            color: azure;
             background-color: rgb(33, 33, 32);
         }
 
@@ -33,6 +36,7 @@
             margin: 30px auto;
             padding: 0 20px;
         }
+
         .card {
             background: rgb(59, 60, 58);
             border-radius: 12px;
@@ -41,41 +45,43 @@
             box-shadow: 0 4px 10px #0000;
             transition: transform 0.1s ease;
         }
+
         .card:hover {
             transform: scale(1.01);
         }
-        .song-title{
+
+        .song-title {
             font-family: "Special Elite", system-ui;
             font-weight: 400;
             font-style: normal;
             font-size: 1.3rem;
-            color:azure;
+            color: azure;
         }
 
         .meta {
-            color:azure;
+            color: azure;
         }
+
         .rating {
             margin-top: 10px;
         }
+
         .stars {
             color: #b2f15a
         }
 
-        .comment {
-            margin-top: 10px;
-            font-weight: 600;
-        }
         .empty {
             text-align: center;
             margin-top: 50px;
-            color:azure;
+            color: azure;
         }
+
         .grid {
-            display:grid;
+            display: grid;
             grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
             gap: 20px;
         }
+
         .split {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -86,30 +92,33 @@
             display: flex;
             flex-direction: column;
         }
+
         .reviews {
             margin-top: 10px;
-            border-top: 1px solid #333;
             padding-top: 10px;
             max-height: 200px;
             overflow-y: auto;
         }
+
         .review {
             margin-bottom: 10px;
             padding-bottom: 8px;
             border-bottom: 1px solid #2a2a2a;
         }
+
         .review-user {
             font-weight: bold;
         }
 
         .comment {
             font-style: italic;
-            color: #ddd;
+            color: #cdd3c9;
+            margin-bottom: 5px;
+            font-weight: 600;
         }
 
         .review-form {
             margin-top: auto;
-            border-top: 1px solid #333;
             padding-top: 10px;
         }
 
@@ -134,6 +143,18 @@
             font-weight: bold;
             cursor: pointer;
         }
+        .delete-btn {
+            background-color: #2a2a2a;
+            color: white;
+            border: none;
+            padding: 3px;
+            margin: 6px;
+            max-width: fit-content;
+            float:right;
+            font-size: 0.85rem;
+            border-radius: 6px;
+            cursor: pointer;
+        }
     </style>
 </head>
 
@@ -147,27 +168,35 @@
 <div class="container">
     <div class="split">
 
-        <div class="column">
-             <h2>Songs</h2>
+        <div class="column"> <!-- SONGS -->
+            <h2>Songs</h2>
 
             {% for song in songs %}
             <div class="card">
                 <div class="song-title">{{ song.songName }}</div>
-
                 {% if song.albumName %}
                 <div class="meta">{{ song.albumName }}</div>
                 {% endif %}
-
                 <div class="rating">
                     <div>
                         <strong>Your Rating:</strong>
+                        {% if user and song.userRating %}
+                        <form method="post" action="/delete-review" class="delete-btn">
+                            <input type="hidden" name="song_id" value="{{ song.songID }}">
+                            <button type="submit" class="delete-btn">Delete</button>
+                        </form>
+                        {% endif %}
                         {% if song.userRating %}
-                            <span class="stars">
-                                {% for i in range(song.userRating) %}★{% endfor %}
-                            </span>
-                            ({{ song.userRating }})
+                        <span class="stars">
+                            {% for i in range(song.userRating) %}★{% endfor %}
+                        </span>
+                        ({{ song.userRating }})
                         {% else %}
-                            Not rated
+                        Not rated
+                        {% endif %}
+
+                        {% if song.userComments %}
+                        <div class="comment">"{{ song.userComments }}"</div>
                         {% endif %}
                     </div>
 
@@ -179,29 +208,29 @@
                         ({{ song.avgRating }})
                     </div>
                 </div>
-                <div class="reviews">
-                    {% if song.ratings|length == 0 %}
-                        <div class="meta">No reviews yet</div>
+
+                {% if song.ratings|length == 0 and song.friendRatings|length == 0 %}
+                    <div class="meta">No reviews yet</div>
+                {% endif %}
+
+                <strong>Friends: </strong>
+                {% if song.friendRatings|length == 0 %}
+                <div class="meta">No friend ratings</div>
+                {% endif %}
+
+                {% for r in song.friendRatings %}
+                <div class="review">
+                    <div class="review-user">{{ r.username }}</div>
+                    <div class="stars">
+                        {% for i in range(r.rating) %}★{% endfor %}
+                    </div>
+                    {% if r.comments %}
+                    <div class="comment">"{{ r.comments }}"</div>
                     {% endif %}
+                </div>
+                {% endfor %}
 
-                    <strong>Friends</strong>
-
-    {% if song.friendRatings|length == 0 %}
-        <div class="meta">No friend ratings</div>
-    {% endif %}
-
-    {% for r in song.friendRatings %}
-    <div class="review">
-        <div class="review-user">{{ r.username }}</div>
-        <div class="stars">
-            {% for i in range(r.rating) %}★{% endfor %}
-        </div>
-        {% if r.comments %}
-        <div class="comment">"{{ r.comments }}"</div>
-        {% endif %}
-    </div>
-    {% endfor %}
-
+                <div class="reviews">
                     {% for r in song.ratings %}
                     <div class="review">
                         <div class="review-user">{{ r.username }}</div>
@@ -215,12 +244,7 @@
                         <div class="comment">"{{ r.comments }}"</div>
                         {% endif %}
 
-                        {% if user and user.userID == r.userID %}
-                        <form method="post" action="/delete-review" style="display:inline;">
-                            <input type="hidden" name="song_id" value="{{ song.songID }}">
-                            <button type="submit" class="delete-btn">Delete</button>
-                        </form>
-                        {% endif %}
+                        
                     </div>
                     {% endfor %}
                 </div>
@@ -228,12 +252,12 @@
                 <!-- ADD REVIEW -->
                 <form class="review-form" method="post" action="/ratings">
                     <input type="hidden" name="song_id" value="{{ song.songID }}">
-                    
+
                     <!--user logged in check-->
                     {% if not user %}
-                        <div class="meta">Login to review</div>
+                    <div class="meta">Login to review</div>
                     {% endif %}
-                    
+
                     <input type="number" name="rating" placeholder="Rating (1-5)" required>
 
                     <textarea name="comments" placeholder="Write a comment..."></textarea>
@@ -245,23 +269,33 @@
             {% endfor %}
 
         </div>
-        <div class="column">
+        <div class="column"> <!-- ALBUMS -->
             <h2>Albums</h2>
 
             {% for album in albums %}
             <div class="card">
                 <div class="song-title">{{ album.albumName }}</div>
                 <div class="meta">{{ album.artistName }}</div>
-                <div class="rating">
+                <div class="rating" style="margin-bottom:10px">
                     <div>
                         <strong>Your Rating:</strong>
+                        {% if user and album.userRating %}
+                        <form method="post" action="/delete-review" class="delete-btn">
+                            <input type="hidden" name="album_id" value="{{ album.albumID }}">
+                            <button type="submit" class="delete-btn">Delete</button>
+                        </form>
+                        {% endif %}
                         {% if album.userRating %}
-                            <span class="stars">
-                                {% for i in range(album.userRating) %}★{% endfor %}
-                            </span>
-                            ({{ album.userRating }})
+                        <span class="stars">
+                            {% for i in range(album.userRating) %}★{% endfor %}
+                        </span>
+                        ({{ album.userRating }})
                         {% else %}
-                            Not rated
+                        Not rated
+                        {% endif %}
+
+                        {% if album.userComments %}
+                        <div class="comment">"{{ album.userComments }}"</div>
                         {% endif %}
                     </div>
 
@@ -274,24 +308,30 @@
                     </div>
                 </div>
 
-                <strong>Friends</strong>
-                    {% if album.friendRatings|length == 0 %}
-                        <div class="meta">No friend ratings</div>
-                    {% endif %}
+                {% if album.ratings|length == 0 and album.friendRatings|length == 0 %}
+                    <div class="meta">No reviews yet</div>
+                {% endif %}
 
-                    {% for r in album.friendRatings %}
-                    <div class="review">
-                        <div class="review-user">{{ r.username }}</div>
-                        <div class="stars">
-                            {% for i in range(r.rating) %}★{% endfor %}
-                        </div>
-                        {% if r.comments %}
-                        <div class="comment">"{{ r.comments }}"</div>
-                        {% endif %}
+                <strong>Friends: </strong>
+                {% if album.friendRatings|length == 0 %}
+                <div class="meta">No friend ratings</div>
+                {% endif %}
+
+                {% for r in album.friendRatings %}
+                <div class="review">
+                    <div class="review-user">{{ r.username }}</div>
+                    <div class="stars">
+                        {% for i in range(r.rating) %}★{% endfor %}
                     </div>
-                    {% endfor %}
+                    {% if r.comments %}
+                    <div class="comment">"{{ r.comments }}"</div>
+                    {% endif %}
+                </div>
+                {% endfor %}
 
                 <div class="reviews">
+                    
+
                     {% for r in album.ratings %}
                     <div class="review">
                         <div class="review-user">{{ r.username }}</div>
@@ -316,17 +356,17 @@
                 <!-- add album review -->
                 <form class="review-form" method="post" action="/album-ratings">
                     <input type="hidden" name="album_id" value="{{ album.albumID }}">
-                    
+
                     <!--user logged in check-->
                     {% if not user %}
-                        <div class="meta">Login to review</div>
+                    <div class="meta">Login to review</div>
                     {% endif %}
-                    
+
                     <input type="number" name="rating" placeholder="Rating (1-5)" required>
                     <textarea name="comments" placeholder="Write a comment..."></textarea>
                     <button type="submit">Add Review</button>
                 </form>
-                
+
             </div>
             {% endfor %}
         </div>
@@ -334,4 +374,5 @@
 </div>
 
 </body>
+
 </html>

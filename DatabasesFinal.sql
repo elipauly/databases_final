@@ -309,7 +309,7 @@ DELIMITER ;
 -- QUERY 1: Show a user's friend list
 SELECT 
 	u.userID, u.username, u.email FROM Friends f
-JOIN User u ON f.friendID = u.userID WHERE f.userID = user_id
+JOIN User u ON f.friendID = u.userID WHERE f.userID = user_ID
 					   
 UNION
 					   
@@ -367,11 +367,12 @@ WHERE s.songID IN (
 -- INSERT DATA
 
 INSERT INTO User VALUES
-(1, 'alice', 'alice@example.com', 'pass1'),
-(2, 'bob', 'bob@example.com', 'pass2'),
-(3, 'charlie', 'charlie@example.com', 'pass3'),
-(4, 'david', 'david@example.com', 'pass4'),
-(5, 'eve', 'eve@example.com', 'pass5');
+(1, 'alice', 'alice@example.com', 'pass1', True),
+(2, 'bob', 'bob@example.com', 'pass2', False),
+(3, 'charlie', 'charlie@example.com', 'pass3', False),
+(4, 'david', 'david@example.com', 'pass4', False),
+(5, 'eve', 'eve@example.com', 'pass5', False);
+
 
 INSERT INTO Friends VALUES
 (1, 2),
@@ -393,6 +394,13 @@ INSERT INTO Song VALUES
 (3, 'Prayer to God', 3),
 (4, 'Heart Cooks Brain', 4),
 (5, 'Flaming', 5);
+
+INSERT INTO Song VALUES
+(6, 'I Felt My Size', 1),
+(7, 'Death of a Party', 2),
+(8, 'Squirrel Song', 3),
+(9, 'Cowboy Dan', 4),
+(10, 'The Gnome', 5);
 
 INSERT INTO Artist VALUES
 (1, 'The Microphones'),

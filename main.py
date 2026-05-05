@@ -29,8 +29,6 @@ def get_current_user(request: Request, db: Session):
         , {"id": int(user_id)}).fetchone()
     
     return result
-        
-
 @app.get("/")
 def home(request: Request, db: Session = Depends(get_db)):
 
@@ -532,3 +530,115 @@ def remove_friend(
     })
     db.commit()
     return RedirectResponse("/friends", status_code=303)
+
+#ADMIN
+
+def is_admin(request: Request, db: Session):
+    user = get_current_user(request, db)
+    
+    if not user or not user.isAdmin:
+        return RedirectResponse("/", status_code=303)
+    
+    results = db.execute(text("""
+        SELECT * FROM v_AdminSongDetails
+        ORDER BY songID
+    """)).fetchall()
+    songs = {}
+
+    for row in results:
+        song_id = row.songID
+
+        if song_id not in songs:
+            songs[song_id] = {
+                "songID": song_id,
+                "songName": row.songName,
+                "albumName": row.albumName,
+                "artistName": row.artistName,
+                "reviews": []
+            }
+        if row.username:
+            songs[song_id]["reviews"].append({
+                "username": row.username,
+                "email": row.email,
+                "rating": row.rating,
+                "comments": row.comments
+            })
+    return templates.TemplateResponse(
+        request,
+        "admin.html",
+        {
+            "request": request,
+            "songs": list(songs.values()),
+            "user": user
+        }
+    )
+
+
+@app.get("/admin")
+def admin_dashboard(request: Request, db: Session = Depends(get_db)):
+    user = get_current_user(request, db)
+
+    if not user or not user.isAdmin:
+        return RedirectResponse("/", status_code=303)
+
+    results = db.execute(text("""
+        SELECT * FROM v_AdminSongDetails
+        ORDER BY songID
+    """)).fetchall()
+
+    songs = {}
+
+    for row in results:
+        song_id = row.songID
+
+        if song_id not in songs:
+            songs[song_id] = {
+                "songID": song_id,
+                "songName": row.songName,
+                "albumName": row.albumName,
+                "artistName": row.artistName,
+                "reviews": []
+            }
+
+        if row.username:
+            songs[song_id]["reviews"].append({
+                "username": row.username,
+                "email": row.email,
+                "rating": row.rating,
+                "comments": row.comments
+            })
+
+    return templates.TemplateResponse(
+        request,
+        "admin.html",
+        {
+            "request": request,
+            "songs": list(songs.values()),
+            "user": user
+        }
+    )
+
+@app.post("/admin/delete-review")
+def admin_delete_review(
+    request: Request,
+    song_id: int = Form(...),
+    username: str = Form(...),
+    db: Session = Depends(get_db)
+):
+    user = get_current_user(request, db)
+
+    if not user or not user.isAdmin:
+        return RedirectResponse("/", status_code=303)
+
+    db.execute(text("""
+        DELETE r FROM Ratings r
+        JOIN User u ON r.userID = u.userID
+        WHERE r.songID = :song_id AND u.username = :username
+    """), {
+        "song_id": song_id,
+        "username": username
+    })
+
+    db.commit()
+
+    return RedirectResponse("/admin", status_code=303)

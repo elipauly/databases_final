@@ -160,6 +160,9 @@
 
 <header>
     <a style="float: left;">SONAR</a>
+    {% if user and user.isAdmin %}
+        <a href="/admin" style="color: #b2f15a; float: right;text-decoration: none;margin-left:30px;">Admin Panel</a>
+    {% endif %}
     <a href="/logout" style="color: #b2f15a; float: right;text-decoration: none;">Log out</a>
     <a href="/friends" style="color: #b2f15a; padding: 30px;text-decoration: none;">Friends</a>
     <a href="/my-ratings" style="color: #b2f15a;text-decoration: none;">My Ratings</a>

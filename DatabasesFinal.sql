@@ -309,12 +309,12 @@ DELIMITER ;
 -- QUERY 1: Show a user's friend list
 SELECT 
 	u.userID, u.username, u.email FROM Friends f
-JOIN User u ON f.friendID = u.userID WHERE f.userID = user_ID
+JOIN User u ON f.friendID = u.userID WHERE f.userID = u.userID
 					   
 UNION
 					   
 SELECT u.userID, u.username, u.email FROM Friends f
-JOIN User u ON f.userID = u.userID WHERE f.friendID = user_id;
+JOIN User u ON f.userID = u.userID WHERE f.friendID = u.userId;
 
 -- QUERY 2: Show all of a user's ratings
 SELECT 
@@ -340,14 +340,13 @@ GROUP BY ar.artistID, ar.artistName
 ORDER BY avgRating DESC;
 
 -- QUERY 4: Total number of ratings on an album
-SELECT 
+SELECT
     al.albumID,
     al.albumName,
-    COUNT(r.rating) AS totalRatings,
-    ROUND(AVG(fn_AvgRating(s.songID)), 2) AS avgRating
+    COUNT(ar.rating)               AS totalRatings,
+    fn_AvgAlbumRating(al.albumID)  AS avgRating
 FROM Album al
-JOIN Song s ON al.albumID = s.albumID
-LEFT JOIN Ratings r ON s.songID = r.songID
+LEFT JOIN AlbumRatings ar ON al.albumID = ar.albumID
 GROUP BY al.albumID, al.albumName
 ORDER BY totalRatings DESC;
 
